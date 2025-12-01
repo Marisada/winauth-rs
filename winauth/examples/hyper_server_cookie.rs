@@ -3,7 +3,7 @@
 //! can be adopted to database-based session management
 
 use hyper::{Request, Response};
-use hyper::body::{Body, Bytes};
+use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper_util::rt::TokioIo;
@@ -30,8 +30,8 @@ struct ConnCtx {
 
 impl ConnCtx {
     fn handle_conn(&self, req: Request<hyper::body::Incoming>) -> impl Future<Output=Result<Response<BoxBody<Bytes, Infallible>>, Infallible>>  {
-        let mut inner = Arc::clone(&self.auth);
-        let mut sess = Arc::clone(&self.sess);
+        let inner = Arc::clone(&self.auth);
+        let sess = Arc::clone(&self.sess);
 
         async move {
            // Handle requests that work with sessions or might not need auth first
@@ -84,7 +84,7 @@ impl ConnCtx {
 
             // Authentication was successful. Store the username in a dummy session store (as we would in a database)
             let username = inner.username();
-            let cookie_name = generate_INSECURE_random_string();
+            let cookie_name = generate_insecure_random_string();
             println!("Got auth request from user {}. Setting cookie {}", username, cookie_name);
             sess.lock().unwrap().insert(cookie_name.clone(), username.to_owned());
             let builder = Response::builder()
@@ -111,7 +111,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             };
 
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(move |a| ctx.handle_conn(a)))
+                .serve_connection(io, service_fn(|a| ctx.handle_conn(a)))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
@@ -143,7 +143,7 @@ impl AuthContext {
 
 // FIXME This is just for demonstration purposes.
 // Use a cryptographically secure PRNG (e.g. rand's StdRng)!
-fn generate_INSECURE_random_string() -> String {
+fn generate_insecure_random_string() -> String {
     println!("WARNING: DO NOT USE THIS DUMMY COOKIE GENERATOR IN PRODUCTION");
     "abcdefghHIGHTLYsecureCOOKIE".to_owned()
 }

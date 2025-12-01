@@ -15,7 +15,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use bitflags::bitflags;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
-use rand::prelude::*;
+use rand::{rng, RngCore};
 
 mod hmac;
 mod md4;
@@ -32,14 +32,14 @@ use crate::md4::Md4;
 static SIGNATURE: &'static [u8] = b"NTLMSSP\0";
 const SIGNATURE_LEN: usize = 8;
 
-/// Trait to convert a u8 to a `enum` representation
-trait FromUint
-where
-    Self: Sized,
-{
-    fn from_u8(n: u8) -> Option<Self>;
-    fn from_u16(n: u16) -> Option<Self>;
-}
+// /// Trait to convert a u8 to a `enum` representation
+// trait FromUint
+// where
+//     Self: Sized,
+// {
+//     fn from_u8(n: u8) -> Option<Self>;
+//     fn from_u16(n: u16) -> Option<Self>;
+// }
 
 /// A generic challenge-response trait, that returns a response until authentication is established
 pub trait NextBytes {
@@ -388,7 +388,7 @@ impl<R: Read> DecodeExt for R {
 struct ChallengeMessage {
     negotiate_flags: NegotiateFlags,
     server_challenge: [u8; 8],
-    target_name: Option<String>,
+    // target_name: Option<String>,
     av_pairs: Vec<AvItem>,
 }
 
@@ -498,7 +498,7 @@ impl ChallengeMessage {
         let ret = ChallengeMessage {
             negotiate_flags: negotiate_flags,
             server_challenge: server_challenge,
-            target_name: target_name,
+            // target_name: target_name,
             av_pairs: av_pairs,
         };
         Ok(ret)
@@ -669,7 +669,7 @@ impl<'a> Ntlmv2Response<'a> {
         };
         w.write_u64::<LittleEndian>(nano_seconds)?;
         let mut client_challenge = [0u8; 8];
-        thread_rng().fill_bytes(&mut client_challenge);
+        rng().fill_bytes(&mut client_challenge);
         w.write_all(&client_challenge)?;
         w.write_u32::<LittleEndian>(0)?; //reserved3
         w.encode_av_pairs(&self.av_pairs)?;
@@ -693,7 +693,7 @@ impl<'a> Ntlmv2Response<'a> {
         let session_base_key = Md5::hmac(&response_key_nt, &nt_proof_str);
         // ExportedSessionKey := NONCE(16)
         let mut exported_session_key = [0u8; 16];
-        thread_rng().fill_bytes(&mut exported_session_key);
+        rng().fill_bytes(&mut exported_session_key);
         let encrypted_random_session_key = rc4::rc4(&session_base_key, &exported_session_key);
 
         let mut ntlmv2_response = nt_proof_str;

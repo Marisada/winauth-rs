@@ -45,7 +45,7 @@ cfg_if! {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut res = perform_ntlm_request!(reqwest::Method::GET, "http://localhost:3000", builder, {
+    let res = perform_ntlm_request!(reqwest::Method::GET, "http://localhost:3000", builder, {
         builder = builder.header("foo", "bar");
     });
     

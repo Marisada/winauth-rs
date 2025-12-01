@@ -1,5 +1,7 @@
 //! Components to perform HTTP-based winauth authentication with a generic http library
 
+use base64::{Engine, prelude::BASE64_STANDARD};
+
 /// The response, that the user of the API is expected to transform into a HTTP response to the client
 pub struct Response {
     pub headers: Vec<(&'static str, String)>,
@@ -45,13 +47,13 @@ pub trait Authenticator: crate::NextBytes {
                     return Err(format!("unsupported auth scheme: {}", header))?;
                 }
                 let challenge = header.trim_start_matches(auth_scheme).trim_start();
-                base64::decode(challenge).map_err(|err| format!("Malformed Base64 in Authorization header: {:?}", err))?
+                BASE64_STANDARD.decode(challenge).map_err(|err| format!("Malformed Base64 in Authorization header: {:?}", err))?
             }
         };
         // Get response, if we're not done yet
         if let Some(next_bytes) = self.next_bytes(Some(&auth_bytes))? {
             return Ok(AuthState::Response(Response {
-                headers: vec![("WWW-Authenticate", format!("{} {}", auth_scheme, base64::encode(&next_bytes)))],
+                headers: vec![("WWW-Authenticate", format!("{} {}", auth_scheme, BASE64_STANDARD.encode(&next_bytes)))],
                 status_code: 401,
             }));
         }
@@ -75,7 +77,7 @@ pub trait Authenticator: crate::NextBytes {
         if methods.contains(&auth_scheme) {
             if let Some(next_bytes) = self.next_bytes(None)? {
                 return Ok(AuthState::Response(Response {
-                    headers: vec![("Authorization", format!("{} {}", auth_scheme, base64::encode(&next_bytes)))],
+                    headers: vec![("Authorization", format!("{} {}", auth_scheme, BASE64_STANDARD.encode(&next_bytes)))],
                     status_code: 0,
                 }));
             }
@@ -83,10 +85,10 @@ pub trait Authenticator: crate::NextBytes {
         // Continue authentication, if already started
         else if methods.len() == 1 && methods[0].starts_with(auth_scheme) {
             let challenge = methods[0].trim_start_matches(auth_scheme).trim_start();
-            let in_bytes = base64::decode(challenge).map_err(|err| format!("Malformed Base64 in WWW-Authenticate header: {:?}", err))?;
+            let in_bytes = BASE64_STANDARD.decode(challenge).map_err(|err| format!("Malformed Base64 in WWW-Authenticate header: {:?}", err))?;
             if let Some(next_bytes) = self.next_bytes(Some(&in_bytes))? {
                 return Ok(AuthState::Response(Response { 
-                    headers: vec![("Authorization", format!("{} {}", auth_scheme, base64::encode(&next_bytes)))],
+                    headers: vec![("Authorization", format!("{} {}", auth_scheme, BASE64_STANDARD.encode(&next_bytes)))],
                     status_code: 0,
                 }));
             }

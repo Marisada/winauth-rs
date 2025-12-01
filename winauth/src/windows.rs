@@ -114,7 +114,7 @@ impl NtlmSspi {
             );
             let cred = match ret {
                 winerror::SEC_E_OK => NtlmCred(handle),
-                err => return Err(io::Error::last_os_error()),
+                _err => return Err(io::Error::last_os_error()),
             };
 
             let sso = NtlmSspi {

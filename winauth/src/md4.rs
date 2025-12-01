@@ -71,19 +71,19 @@ fn decode(output: &mut [u32], bytes: &[u8]) {
 #[allow(non_snake_case)]
 #[inline]
 fn F(x: u32, y: u32, z: u32) -> u32 {
-    (((x) & (y)) | ((!x) & (z)))
+    ((x) & (y)) | ((!x) & (z))
 }
 
 #[allow(non_snake_case)]
 #[inline]
 fn G(x: u32, y: u32, z: u32) -> u32 {
-    (((x) & (y)) | ((x) & (z)) | ((y) & (z)))
+    ((x) & (y)) | ((x) & (z)) | ((y) & (z))
 }
 
 #[allow(non_snake_case)]
 #[inline]
 fn H(x: u32, y: u32, z: u32) -> u32 {
-    ((x) ^ (y) ^ (z))
+    (x) ^ (y) ^ (z)
 }
 
 macro_rules! FF {

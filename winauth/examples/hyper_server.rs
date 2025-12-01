@@ -1,6 +1,6 @@
 //! A minimal hyper server example
 use hyper::{Request, Response};
-use hyper::body::{Body, Bytes};
+use hyper::body::Bytes;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper_util::rt::TokioIo;
@@ -22,7 +22,7 @@ cfg_if! {
 struct ConnCtx(Arc<Mutex<AuthContext>>);
 impl ConnCtx {
     fn handle_conn(&self, req: Request<hyper::body::Incoming>) -> impl Future<Output=Result<Response<BoxBody<Bytes, Infallible>>, Infallible>>  {
-        let mut inner = Arc::clone(&self.0);
+        let inner = Arc::clone(&self.0);
 
         async move {
             let mut inner = inner.lock().unwrap();
@@ -79,7 +79,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             let ctx = ConnCtx(Arc::new(Mutex::new(AuthContext::None)));
 
             if let Err(err) = http1::Builder::new()
-                .serve_connection(io, service_fn(move |a| ctx.handle_conn(a)))
+                .serve_connection(io, service_fn(|a| ctx.handle_conn(a)))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
