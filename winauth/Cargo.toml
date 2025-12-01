@@ -17,7 +17,11 @@ md5 = "0.8"
 base64 = { version = "0.22" }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security_Authentication_Identity"] }
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security_Authentication_Identity",
+    "Win32_Security_Credentials",
+] }
 
 [dev-dependencies]
 hyper = "1"
